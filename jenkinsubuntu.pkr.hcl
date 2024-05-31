@@ -19,7 +19,7 @@ source "amazon-ebs" "ubuntu" {
   source_ami    = "ami-04b70fa74e45c3917"
   ssh_username  = "ubuntu"
 
-  ebs_block_device {
+  ami_block_device_mapping {
     device_name = "/dev/sda1"
     encrypted   = true
     kms_key_id  = "22ad3ccd-28a1-4d05-ad73-5f284cea93b3"
@@ -35,7 +35,6 @@ build {
   provisioner "shell" {
     inline = [
       "sudo apt update -y"
-     
     ]
   }
 }
