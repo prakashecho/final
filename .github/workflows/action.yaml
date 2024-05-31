@@ -4,10 +4,10 @@ on:
   push:
 
 permissions:
-  id-token: write # This is required for requesting the JWT
+  id-token: write
 
 env:
-  PRODUCT_VERSION: "1.10.0" # or: "latest"
+  PRODUCT_VERSION: "1.10.0"
 
 jobs:
   packer:
@@ -29,7 +29,6 @@ jobs:
         with:
           packer_version: "1.10.0"
           
-
       - name: Run `packer init`
         id: init
         run: "packer init ./jenkinsubuntu.pkr.hcl"
@@ -42,11 +41,15 @@ jobs:
         id: build
         run: packer build -machine-readable ./jenkinsubuntu.pkr.hcl | tee build.log
 
+      - name: Show Build Log
+        run: cat build.log
+
       - name: Extract AMI ID
         id: extract-ami
         run: |
           AMI_ID=$(grep 'artifact,0,id' build.log | cut -d, -f6 | cut -d: -f2)
           echo "AMI_ID=$AMI_ID" >> $GITHUB_ENV
+          echo "Extracted AMI ID: $AMI_ID"
         shell: bash
 
   terraform:
@@ -72,10 +75,4 @@ jobs:
         run: terraform init
 
       - name: Terraform Apply
-        run: terraform apply -auto-approve -var="packer_ami_name=Jenkins5"
-
-      - name: Debugging
-        run: |
-          echo "Before grep command"
-          grep 'artifact,0,id' build.log | cut -d, -f6 | cut -d: -f2
-          echo "After grep command"
+        run: terraform apply -auto-approve -var="source_ami_id=${{ env.AMI_ID }}"
