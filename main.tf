@@ -7,6 +7,7 @@ variable "source_ami_id" {
   type        = string
 }
 
+# Update the policy of the existing KMS key to allow usage by another AWS account
 resource "aws_kms_key_policy" "existing_key_policy" {
   key_id = "arn:aws:kms:us-east-1:874599947932:key/22ad3ccd-28a1-4d05-ad73-5f284cea93b3"
   policy = <<EOF
@@ -56,7 +57,23 @@ resource "aws_kms_key_policy" "existing_key_policy" {
 EOF
 }
 
+# Share the AMI with the specified account
 resource "aws_ami_launch_permission" "share_ami" {
   image_id   = var.source_ami_id
   account_id = "280435798514"
+}
+
+# Fetch the most recent EBS snapshot related to the newly created encrypted AMI
+data "aws_ebs_snapshot" "snapshot" {
+  most_recent = true
+  filter {
+    name   = "description"
+    values = ["*${var.source_ami_id}*"]
+  }
+}
+
+# Share the snapshot with the specified account
+resource "aws_ebs_snapshot_permission" "share_snapshot" {
+  snapshot_id = data.aws_ebs_snapshot.snapshot.id
+  account_id  = "280435798514"
 }
