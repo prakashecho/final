@@ -25,11 +25,10 @@ jobs:
           aws-region: us-east-1  
 
       - name: Setup `packer`
-        uses: hashicorp/setup-packer@v2
+        uses: hashicorp/setup-packer@main
         with:
-          packer_version: "1.8.5"
-          plugins: |
-            github.com/hashicorp/amazon/latest
+          packer_version: "1.10.0"
+          
 
       - name: Run `packer init`
         id: init
