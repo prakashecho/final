@@ -1,6 +1,9 @@
 provider "aws" {
   region = "us-east-1"
 }
+variable "source_ami_id" {
+  description = "The ID of the source AMI to copy"
+  type        = string
 
 # Retrieve the existing encrypted AMI ID
 data "aws_ami" "source_ami" {
