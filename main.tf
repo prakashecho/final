@@ -7,7 +7,7 @@ variable "source_ami_id" {
   type        = string
 }
 
-# Update the policy of the existing KMS key to allow usage by another AWS account
+# Update the policy of the existing KMS key to allow usge by another AWS account
 resource "aws_kms_key_policy" "existing_key_policy" {
   key_id = "arn:aws:kms:us-east-1:874599947932:key/22ad3ccd-28a1-4d05-ad73-5f284cea93b3"
   policy = <<EOF
