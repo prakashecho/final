@@ -48,9 +48,8 @@ jobs:
         id: extract-ami
         run: |
           AMI_ID=$(grep 'artifact,0,id' build.log | cut -d, -f6 | cut -d: -f2)
-          echo "AMI_ID=$AMI_ID" >> $GITHUB_ENV
-          echo "Extracted AMI ID: $AMI_ID"
-        shell: bash
+          echo "::set-output name=ami_id::$AMI_ID"
+
 
   terraform:
     runs-on: ubuntu-latest
@@ -75,4 +74,4 @@ jobs:
         run: terraform init
 
       - name: Terraform Apply
-        run: terraform apply -auto-approve -var="source_ami_id=${{ env.AMI_ID }}"
+        run: terraform apply -auto-approve -var="source_ami_id=${{ steps.packer.outputs.ami_id }}"
