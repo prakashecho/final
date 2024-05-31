@@ -72,7 +72,7 @@ jobs:
         run: terraform init
 
       - name: Terraform Apply
-        run: terraform apply -auto-approve -var "source_ami_id=${{ env.AMI_ID }}"
+        run: terraform apply -auto-approve -var="packer_ami_name=Jenkins5"
 
       - name: Debugging
         run: |
