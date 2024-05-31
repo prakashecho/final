@@ -10,7 +10,7 @@ packer {
 source "amazon-ebs" "ubuntu" {
   access_key     = ""
   secret_key     = ""
-  ami_name       = "Jenkins4"
+  ami_name       = "Jenkins5"
   instance_type  = "t2.micro"
   region         = "us-east-1"
   source_ami     = "ami-04b70fa74e45c3917"
