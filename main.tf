@@ -1,11 +1,17 @@
 provider "aws" {
   region = "us-east-1"
 }
+
 variable "source_ami_id" {
   description = "The ID of the source AMI to copy"
   type        = string
+}
 
-# Retrieve the existing encrypted AMI ID
+variable "target_regions" {
+  type    = list(string)
+  default = ["us-east-1", "us-east-2", "us-west-1"]  # Add the target regions you want to copy the AMI to
+}
+
 data "aws_ami" "source_ami" {
   most_recent = true
 
@@ -20,25 +26,17 @@ data "aws_ami" "source_ami" {
   }
 }
 
-# Define the list of target regions for AMI copy
-variable "target_regions" {
-  type    = list(string)
-  default = ["us-east-1", "us-east-2", "us-west-1"]  # Add the target regions you want to copy the AMI to
-}
-
-# Copy the existing encrypted AMI to multiple regions
 resource "aws_ami_copy" "encrypted_ami_copies" {
   count = length(var.target_regions)
 
   name              = "encrypted-ami-${var.target_regions[count.index]}"
-  source_ami_id     = data.aws_ami.source_ami.id
+  source_ami_id     = var.source_ami_id
   source_ami_region = "us-east-1"
   encrypted         = true
   kms_key_id        = "arn:aws:kms:us-east-1:874599947932:key/22ad3ccd-28a1-4d05-ad73-5f284cea93b3"
   region            = var.target_regions[count.index]
 }
 
-# Share the copied AMIs with other AWS accounts in respective regions
 resource "aws_launch_permission" "shared_ami" {
   count = length(var.target_regions)
 
@@ -46,7 +44,6 @@ resource "aws_launch_permission" "shared_ami" {
   image_id   = aws_ami_copy.encrypted_ami_copies[count.index].id
 }
 
-# Optionally, you can modify the snapshot permissions as well for each region
 resource "null_resource" "share_snapshot" {
   count = length(var.target_regions)
 
@@ -55,7 +52,6 @@ resource "null_resource" "share_snapshot" {
   }
 }
 
-# Share the KMS key with other accounts
 resource "aws_kms_key_policy" "key_policy" {
   key_id = "arn:aws:kms:us-east-1:874599947932:key/22ad3ccd-28a1-4d05-ad73-5f284cea93b3"
   policy = jsonencode({
@@ -87,7 +83,6 @@ resource "aws_kms_key_policy" "key_policy" {
           "AWS" : [
             "arn:aws:iam::874599947932:root",  # Your AWS account
             "280435798514",                  # Add the AWS account IDs you want to share with
-            
           ]
         },
         "Action" : [
