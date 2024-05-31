@@ -47,9 +47,13 @@ jobs:
       - name: Extract AMI ID
         id: extract-ami
         run: |
+          echo "Build Log:"
+          cat build.log
+          echo "Extracting AMI ID..."
           AMI_ID=$(grep 'artifact,0,id' build.log | cut -d, -f6 | cut -d: -f2)
-          echo "::set-output name=ami_id::$AMI_ID"
-
+          echo "AMI_ID=$AMI_ID" >> $GITHUB_ENV
+          echo "Extracted AMI ID: $AMI_ID"
+        shell: bash
 
   terraform:
     runs-on: ubuntu-latest
@@ -63,7 +67,7 @@ jobs:
         with:
           terraform_version: "1.1.7"
 
-      - name: Configure AWS credetials
+      - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4.0.2
         with:
           role-to-assume: arn:aws:iam::874599947932:role/gitaws
@@ -74,4 +78,4 @@ jobs:
         run: terraform init
 
       - name: Terraform Apply
-        run: terraform apply -auto-approve -var="source_ami_id=${{ steps.packer.outputs.ami_id }}"
+        run: terraform apply -auto-approve -var="source_ami_id=${{ env.AMI_ID }}"
