@@ -2,13 +2,11 @@ provider "aws" {
   region = "us-east-1"
 }
 
-# Define the variable for the Packer AMI name
 variable "packer_ami_name" {
   description = "The AMI name from the Packer build"
   type        = string
 }
 
-# Data source to find the AMI ID by its name
 data "aws_ami" "packer_ami" {
   most_recent = true
   owners      = ["self"]
@@ -18,7 +16,6 @@ data "aws_ami" "packer_ami" {
   }
 }
 
-# Copy the source AMI and encrypt it using the existing KMS key
 resource "aws_ami_copy" "encrypted_ami1" {
   name              = "encrypted-ami1"
   source_ami_id     = data.aws_ami.packer_ami.id
@@ -31,7 +28,6 @@ output "new_ami_id" {
   value = aws_ami_copy.encrypted_ami1.id
 }
 
-# Update the policy of the existing KMS key to allow usage by another AWS account
 resource "aws_kms_key_policy" "existing_key_policy" {
   key_id = aws_ami_copy.encrypted_ami1.kms_key_id
   policy = <<EOF
@@ -81,13 +77,11 @@ resource "aws_kms_key_policy" "existing_key_policy" {
 EOF
 }
 
-# Share the AMI with the specified account
 resource "aws_ami_launch_permission" "share_ami" {
   image_id   = aws_ami_copy.encrypted_ami1.id
   account_id = "280435798514"
 }
 
-# Fetch the most recent EBS snapshot related to the newly created encrypted AMI
 data "aws_ebs_snapshot" "snapshot" {
   most_recent = true
   filter {
@@ -96,8 +90,8 @@ data "aws_ebs_snapshot" "snapshot" {
   }
 }
 
-# Share the snapshot with the specified account
-resource "aws_ebs_snapshot_permission" "share_snapshot" {
-  snapshot_id = data.aws_ebs_snapshot.snapshot.id
-  account_id  = "280435798514"
+resource "null_resource" "share_snapshot" {
+  provisioner "local-exec" {
+    command = "aws ec2 modify-snapshot-attribute --snapshot-id ${data.aws_ebs_snapshot.snapshot.id} --attribute createVolumePermission --operation-type add --user-ids 280435798514"
+  }
 }
